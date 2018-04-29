@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:audioplayers/audioplayer.dart';
 import 'package:audio_recorder/audio_recorder.dart';
+import 'package:simple_permissions/simple_permissions.dart';
 import 'package:uuid/uuid.dart';
 import 'package:path/path.dart' as path;
 import 'dart:async';
@@ -32,8 +33,6 @@ class ChatScreenState extends State<ChatScreen> {
     final directory = await getApplicationDocumentsDirectory();
     return directory.path;
   }
-//    print(recording.path);
-//    await audioPlayer.play(recording.path);
 
   _start() async {
     String _currentPath = await _localPath+"/"+"taud"+uuidMaker.v1()+".aac";
@@ -47,11 +46,37 @@ class ChatScreenState extends State<ChatScreen> {
         }
         bool isRecording = await AudioRecorder.isRecording;
         setState(() {
-          _recording = new Recording(duration: new Duration(), path: "");
+          _recording = new Recording(duration: new Duration(), path: _currentPath);
           _isRecording = isRecording;
         });
       } else {
-        Scaffold.of(context).showSnackBar(new SnackBar(content: new Text("You must accept permissions")));
+        await showDialog(context: context, barrierDismissible: false, builder: (BuildContext context) {return new AlertDialog(
+          title: new Text('We need your permissions.'),
+          content: new SingleChildScrollView(
+            child: new ListBody(
+              children: <Widget>[
+                new Text('To help us better deliver the audio experience, we need your permissions.'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            new FlatButton(
+              child: new Text('Settings'),
+              textColor: Colors.grey[600],
+              onPressed: () {
+                SimplePermissions.openSettings();
+              },
+            ),
+            new FlatButton(
+                child: new Text('Continue'),
+                onPressed: () {
+                  Navigator.pop(context);
+                }
+            ),
+          ],
+        );});
+        await _requestAudioPermission();
+        await _requestStoragePermission();
       }
     } catch (e){
       print(e);
@@ -61,11 +86,19 @@ class ChatScreenState extends State<ChatScreen> {
   _stop() async {
     var recording = await AudioRecorder.stop();
     bool isRecording = await AudioRecorder.isRecording;
-    audioPlayer.play(recAddr);
+    audioPlayer.play(recording.path);
     setState(() {
       _recording = recording;
       _isRecording = isRecording;
     });
+  }
+
+  _requestAudioPermission() async {
+    var res = await SimplePermissions.requestPermission(Permission.RecordAudio);
+  }
+
+  _requestStoragePermission() async {
+    var res = await SimplePermissions.requestPermission(Permission.WriteExternalStorage);
   }
 
   @override
@@ -81,7 +114,6 @@ class ChatScreenState extends State<ChatScreen> {
             else {
               _start();
             }
-
           },
           child: new Text('Do Audio Thiny'),
         ),

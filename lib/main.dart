@@ -14,6 +14,7 @@ class Hablamos extends StatelessWidget {
       theme: new ThemeData(
         brightness: Brightness.dark,
         primaryColor: Colors.red[400],
+        highlightColor: Colors.red[300],
         accentColor: Colors.redAccent,
       ),
     );
