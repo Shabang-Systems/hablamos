@@ -4,6 +4,7 @@ import 'package:audioplayers/audioplayer.dart';
 import 'package:audio_recorder/audio_recorder.dart';
 import 'package:simple_permissions/simple_permissions.dart';
 import 'package:uuid/uuid.dart';
+import 'fbLib/fbAuthLib.dart';
 import 'package:path/path.dart' as path;
 import 'dart:async';
 import 'dart:io';
