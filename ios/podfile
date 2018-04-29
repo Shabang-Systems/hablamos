@@ -1,0 +1,17 @@
+platform :ios, '8.0'
+
+target "Runner" do
+    pod 'Firebase'
+    pod 'Firebase/AdMob'
+    pod 'Firebase/Analytics'
+    pod 'Firebase/Auth'
+    pod 'Firebase/Crash'
+    pod 'Firebase/Database'
+    pod 'Firebase/DynamicLinks'
+    pod 'Firebase/Invites'
+    pod 'Firebase/Messaging'
+    pod 'Firebase/Performance'
+    pod 'Firebase/RemoteConfig'
+    pod 'Firebase/Storage'
+end
+
