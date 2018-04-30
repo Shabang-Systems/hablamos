@@ -11,6 +11,7 @@ dependencies:
   path:
   path_provider:
   google_sign_in:
+  cloud_firestore:
   firebase_analytics:
   firebase_auth:
   firebase_database:

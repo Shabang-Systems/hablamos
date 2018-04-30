@@ -1,14 +1,32 @@
-import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
+import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
 
-class AuthenticationKey {
+class AuthInstance {
   bool isAuthenticated = false;
-  var fbUser = null;
+  FirebaseUser user;
+
+  Future<int> ensureLoggedIn() async {
+    user = await FirebaseAuth.instance.currentUser();
+    if (user == null) {
+      return 1;
+    }
+    isAuthenticated = true;
+    return 0;
+  }
 
   void authenticate(email, password) async {
-    this.fbUser = await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
+    this.user = await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
+    isAuthenticated = true;
   }
 
   void createAccount(email, password) async {
-    this.fbUser = await FirebaseAuth.instance.createUserWithEmailAndPassword(email: email, password: password);
+    this.user = await FirebaseAuth.instance.createUserWithEmailAndPassword(email: email, password: password);
+    isAuthenticated = true;
   }
+
+  void signOut() async {
+    FirebaseAuth.instance.signOut();
+    isAuthenticated = false;
+  }
+
 }

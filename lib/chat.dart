@@ -3,7 +3,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:audioplayers/audioplayer.dart';
 import 'package:audio_recorder/audio_recorder.dart';
 import 'package:simple_permissions/simple_permissions.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
+import 'fbLib/fbDBLib.dart';
 import 'fbLib/fbAuthLib.dart';
 import 'package:path/path.dart' as path;
 import 'dart:async';
@@ -31,7 +33,7 @@ class ChatScreenState extends State<ChatScreen> {
   ChatScreenState(this.id, this.name, this.description);
 
   Future<String> get _localPath async {
-    final directory = await getApplicationDocumentsDirectory();
+    final directory = await getTemporaryDirectory();
     return directory.path;
   }
 
@@ -86,6 +88,12 @@ class ChatScreenState extends State<ChatScreen> {
 
   _stop() async {
     var recording = await AudioRecorder.stop();
+    var ie = AuthInstance();
+    if(await ie.ensureLoggedIn()==1){
+      ie.authenticate("liuhoujun15@gmail.com", "Liuhoujun@");
+    }
+    var a = Audio(recording.path, [0.0, 0.0], ie.user);
+    a.create();
     bool isRecording = await AudioRecorder.isRecording;
     audioPlayer.play(recording.path);
     setState(() {
@@ -104,6 +112,13 @@ class ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context){
+    var di = DatabaseInstance();
+    di.audioStream().listen((QuerySnapshot q) {
+      for (var i in q.documents){
+        print("ID|" + i.documentID + "| Data|" +i.data.toString() + "|");
+      }
+    });
+
     return new Scaffold(
       appBar: new AppBar(title: new Text(id)),
       body: new Center(
