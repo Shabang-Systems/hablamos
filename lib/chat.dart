@@ -92,10 +92,11 @@ class ChatScreenState extends State<ChatScreen> {
     if(await ie.ensureLoggedIn()==1){
       ie.authenticate("liuhoujun15@gmail.com", "Liuhoujun@");
     }
-    var a = Audio(recording.path, [0.0, 0.0], ie.user);
-    a.create();
+    var a = Audio(recording.path, [0.0, 0.0], ie.user.uid);
+    var di = DatabaseInstance();
+    di.add(a);
     bool isRecording = await AudioRecorder.isRecording;
-    audioPlayer.play(recording.path);
+//    audioPlayer.play(recording.path);
     setState(() {
       _recording = recording;
       _isRecording = isRecording;
@@ -110,15 +111,20 @@ class ChatScreenState extends State<ChatScreen> {
     var res = await SimplePermissions.requestPermission(Permission.WriteExternalStorage);
   }
 
+  getAndPlay(data) async {
+    Audio audObj = await Audio.createAudio(data);
+    audioPlayer.play(audObj.path);
+  }
+
   @override
   Widget build(BuildContext context){
     var di = DatabaseInstance();
     di.audioStream().listen((QuerySnapshot q) {
       for (var i in q.documents){
         print("ID|" + i.documentID + "| Data|" +i.data.toString() + "|");
+        getAndPlay(i.data);
       }
     });
-
     return new Scaffold(
       appBar: new AppBar(title: new Text(id)),
       body: new Center(
