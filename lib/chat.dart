@@ -53,33 +53,7 @@ class ChatScreenState extends State<ChatScreen> {
           _isRecording = isRecording;
         });
       } else {
-        await showDialog(context: context, barrierDismissible: false, builder: (BuildContext context) {return new AlertDialog(
-          title: new Text('We need your permissions.'),
-          content: new SingleChildScrollView(
-            child: new ListBody(
-              children: <Widget>[
-                new Text('To help us better deliver the audio experience, we need your permissions.'),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            new FlatButton(
-              child: new Text('Settings'),
-              textColor: Colors.grey[600],
-              onPressed: () {
-                SimplePermissions.openSettings();
-              },
-            ),
-            new FlatButton(
-                child: new Text('Continue'),
-                onPressed: () {
-                  Navigator.pop(context);
-                }
-            ),
-          ],
-        );});
-        await _requestAudioPermission();
-        await _requestStoragePermission();
+        this._permissionDialog();
       }
     } catch (e){
       print(e);
@@ -93,14 +67,43 @@ class ChatScreenState extends State<ChatScreen> {
       ie.authenticate("liuhoujun15@gmail.com", "Liuhoujun@");
     }
     var a = Audio(recording.path, [0.0, 0.0], ie.user.uid);
-    var di = DatabaseInstance();
+    var di = FirebasePointer();
     di.add(a);
     bool isRecording = await AudioRecorder.isRecording;
-//    audioPlayer.play(recording.path);
     setState(() {
       _recording = recording;
       _isRecording = isRecording;
     });
+  }
+
+  _permissionDialog() async {
+    await showDialog(context: context, barrierDismissible: false, builder: (BuildContext context) {return new AlertDialog(
+      title: new Text('We need your permissions.'),
+      content: new SingleChildScrollView(
+        child: new ListBody(
+          children: <Widget>[
+            new Text('To help us better deliver the audio experience, we need your permissions.'),
+          ],
+        ),
+      ),
+      actions: <Widget>[
+        new FlatButton(
+          child: new Text('Settings'),
+          textColor: Colors.grey[600],
+          onPressed: () {
+            SimplePermissions.openSettings();
+          },
+        ),
+        new FlatButton(
+            child: new Text('Continue'),
+            onPressed: () {
+              Navigator.pop(context);
+            }
+        ),
+      ],
+    );});
+    await _requestAudioPermission();
+    await _requestStoragePermission();
   }
 
   _requestAudioPermission() async {
@@ -113,17 +116,26 @@ class ChatScreenState extends State<ChatScreen> {
 
   getAndPlay(data) async {
     Audio audObj = await Audio.createAudio(data);
-    audioPlayer.play(audObj.path);
+    print(audObj.path);
+    final result = await audioPlayer.play(audObj.path, isLocal: true);
+    print(result);
   }
 
   @override
   Widget build(BuildContext context){
-    var di = DatabaseInstance();
+    var di = FirebasePointer();
+    var knownDocuments = [];
     di.audioStream().listen((QuerySnapshot q) {
       for (var i in q.documents){
+        if (knownDocuments.contains(i.documentID)){
+          break;
+        }
+        knownDocuments.add(i.documentID);
         print("ID|" + i.documentID + "| Data|" +i.data.toString() + "|");
         getAndPlay(i.data);
+        print(knownDocuments);
       }
+
     });
     return new Scaffold(
       appBar: new AppBar(title: new Text(id)),

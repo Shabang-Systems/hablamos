@@ -4,6 +4,11 @@ import 'lib/fbLib/fbAuthLib.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:async';
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'dart:async';
 
 
 class ChatScreen extends StatefulWidget {
@@ -60,11 +65,7 @@ class ChatScreenState extends State<ChatScreen> {
 
 
 // -------------
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
-import 'dart:async';
+
 
 class AudioItem{
   FirebaseUser user;
