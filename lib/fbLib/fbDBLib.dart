@@ -1,6 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 import 'dart:io';
 import 'dart:async';
@@ -10,6 +13,7 @@ class Audio {
   List<int> audioBytes;
   File audioFile;
   String uid;
+  String uniqueId;
   String collectionName;
   List<double> locale;
   CollectionReference collection;
@@ -18,6 +22,7 @@ class Audio {
       [collectionName = "community"]) {
     this.path = path;
     this.uid = uid;
+    this.uniqueId = Uuid().v1();
     this.collectionName = collectionName;
     this.collection = Firestore.instance.collection(collectionName);
     this.audioFile = File(path);
@@ -27,32 +32,41 @@ class Audio {
   Future<Map<String, dynamic>> get serializedData async {
     this.audioBytes = audioFile.readAsBytesSync();
     return {
-      'audio': List.from(this.audioBytes),
       'locale': new GeoPoint(this.locale[0], this.locale[1]),
       'timestamp': DateTime.now().toUtc().toIso8601String(),
-      'uid': this.uid,
+      'userid': this.uid,
     };
   }
 
   static Future<Audio> createAudio(Map<String, dynamic> dbMap, [collectionName = "community"]) async {
+    final String downloadUriString = dbMap["dataurl"];
+
     final directory = await getTemporaryDirectory();
     final uuidMaker = new Uuid();
-    String audPath = directory.path+"/"+"hbAud_"+uuidMaker.v1()+".aac";
-    List<int> audioBytes = new List();
-    for (var i in dbMap["audio"]) {audioBytes.add(i);}
+    final uniqueId = uuidMaker.v1();
+    String audPath = directory.path+"/"+"hbAud_"+uniqueId+".aac";
     final audFile = new File(audPath);
-    audFile.writeAsBytesSync(audioBytes);
-    return new Audio(audPath, [dbMap["locale"].latitude, dbMap["locale"].longitude], dbMap["uid"], collectionName);
+
+    await http.get(downloadUriString).then((response) {
+      audFile.writeAsBytesSync(response.bodyBytes);
+    });
+
+    var audObj = new Audio(audPath, [dbMap["locale"].latitude, dbMap["locale"].longitude], dbMap["userid"], collectionName);
+    audObj.uniqueId = uniqueId;
+    return audObj;
   }
 }
 
-class DatabaseInstance{
+class FirebasePointer{
   String collectionName;
   CollectionReference collection;
+  FirebaseStorage storageInstance;
+  StorageReference storageRefrence;
 
-  DatabaseInstance([collectionName="community"]){
+  FirebasePointer([collectionName="community"]){
     this.collectionName = collectionName;
     this.collection = Firestore.instance.collection(collectionName);
+    this.storageInstance = new FirebaseStorage();
   }
 
   Stream<QuerySnapshot> audioStream({int limit, int offset}) {
@@ -71,6 +85,27 @@ class DatabaseInstance{
   }
 
   void add(Audio aud) async {
-    collection.document().setData(await aud.serializedData);
+    final storageRefrence = storageInstance.ref().child('audFiles').child(aud.uniqueId);
+    final StorageUploadTask uploadTask = storageRefrence.putFile(
+      aud.audioFile,
+    );
+    final Uri downloadUri = (await uploadTask.future).downloadUrl;
+    final String downloadUriString = downloadUri.toString();
+    Map<String, dynamic> serializedData = await aud.serializedData;
+    serializedData['dataurl'] = downloadUriString;
+    final TransactionHandler createTransaction = (Transaction tx) async {
+      final DocumentSnapshot newDoc = await tx.get(collection.document());
+      await tx.set(newDoc.reference, serializedData);
+      return serializedData;
+    };
+
+    await Firestore.instance.runTransaction(createTransaction).catchError((e) {
+      print('dart error: $e');
+    });
+
+
+    collection.document(aud.uniqueId).setData(serializedData);
   }
+
 }
+

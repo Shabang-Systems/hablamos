@@ -23,7 +23,6 @@ class ChatScreen extends StatefulWidget {
 class ChatScreenState extends State<ChatScreen> {
   final String id, name, description;
   final Uuid uuid = new Uuid();
-  final AudioPlayer audioPlayer = new AudioPlayer();
   final uuidMaker = new Uuid();
   Recording _recording = new Recording();
   bool _isRecording = false;
@@ -115,10 +114,9 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   getAndPlay(data) async {
+    final AudioPlayer audioPlayer = new AudioPlayer();
     Audio audObj = await Audio.createAudio(data);
-    print(audObj.path);
     final result = await audioPlayer.play(audObj.path, isLocal: true);
-    print(result);
   }
 
   @override
@@ -128,12 +126,11 @@ class ChatScreenState extends State<ChatScreen> {
     di.audioStream().listen((QuerySnapshot q) {
       for (var i in q.documents){
         if (knownDocuments.contains(i.documentID)){
-          break;
+          continue;
         }
         knownDocuments.add(i.documentID);
-        print("ID|" + i.documentID + "| Data|" +i.data.toString() + "|");
+
         getAndPlay(i.data);
-        print(knownDocuments);
       }
 
     });
