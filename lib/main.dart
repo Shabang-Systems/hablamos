@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hablamos/chat.dart';
+import 'package:location/location.dart';
 import 'package:latlong/latlong.dart';
 import 'package:flutter_map/plugin_api.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -31,8 +32,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenBaseState extends State<HomeScreen> {
+  FlutterMap _map;
   @override
   Widget build(BuildContext context) {
+    this.buildMap();
     return new Scaffold(
       appBar: new AppBar(
         title: new Text("Hablamos"),
@@ -40,21 +43,37 @@ class HomeScreenBaseState extends State<HomeScreen> {
         actions: <Widget>[
         ],
       ),
-      body: new FlutterMap(
-        options: new MapOptions(
-          center: new LatLng(37.452960, -122.181725),
-          zoom: 10.0,
-        ),
-        layers: [
-          new TileLayerOptions(
-            urlTemplate: "https://api.mapbox.com/styles/v1/jemoka/cji83zmdp1goz2spfxt3g1rm9/tiles/256/{z}/{x}/{y}@2x?access_token={accessToken}",
-            additionalOptions: {
-              'accessToken': 'pk.eyJ1IjoiamVtb2thIiwiYSI6ImNqMmw1djllMDAwNDUycXFiNjhpOGIxc3MifQ.-C_4-TdEJpRJ-qxzB9NS0g',
-            },
-          ),
-        ],
-      ),
+      body: _map
     );
+  }
+
+  void buildMap() async {
+    var _currentLocation = <String, double>{};
+    var _location = new Location();
+    try {
+      _currentLocation = await _location.getLocation;
+    } on Exception {
+      // beg the user for location permission
+      _currentLocation = null;
+    }
+    var _loadedMaP = new FlutterMap(
+      options: new MapOptions(
+        center: new LatLng(_currentLocation["latitude"], _currentLocation["longitude"]),
+        zoom: 10.0,
+      ),
+      layers: [
+        new TileLayerOptions(
+          urlTemplate: "https://api.mapbox.com/styles/v1/jemoka/cji83zmdp1goz2spfxt3g1rm9/tiles/256/{z}/{x}/{y}@2x?access_token={accessToken}",
+          additionalOptions: {
+            'accessToken': 'pk.eyJ1IjoiamVtb2thIiwiYSI6ImNqMmw1djllMDAwNDUycXFiNjhpOGIxc3MifQ.-C_4-TdEJpRJ-qxzB9NS0g',
+          },
+        ),
+      ],
+    );
+    setState(() {
+      _map=_loadedMaP;
+    });
+
   }
 }
 
