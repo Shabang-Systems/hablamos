@@ -42,16 +42,14 @@ class HomeScreenBaseState extends State<HomeScreen> {
       ),
       body: new FlutterMap(
         options: new MapOptions(
-          center: new LatLng(37.422, 122.084),
-          zoom: 13.0,
+          center: new LatLng(37.452960, -122.181725),
+          zoom: 10.0,
         ),
         layers: [
           new TileLayerOptions(
-            urlTemplate: "https://api.tiles.mapbox.com/v4/"
-                "{id}/{z}/{x}/{y}@2x.png?access_token={accessToken}",
+            urlTemplate: "https://api.mapbox.com/styles/v1/jemoka/cji83zmdp1goz2spfxt3g1rm9/tiles/256/{z}/{x}/{y}@2x?access_token={accessToken}",
             additionalOptions: {
               'accessToken': 'pk.eyJ1IjoiamVtb2thIiwiYSI6ImNqMmw1djllMDAwNDUycXFiNjhpOGIxc3MifQ.-C_4-TdEJpRJ-qxzB9NS0g',
-              'id': 'mapbox.mapbox-terrain-v2',
             },
           ),
         ],
